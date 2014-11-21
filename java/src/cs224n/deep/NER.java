@@ -1,5 +1,7 @@
 package cs224n.deep;
 
+import cs224n.util.FileOutputer; 
+
 import java.util.*;
 import java.io.*;
 
@@ -17,6 +19,13 @@ public class NER {
 	// this reads in the train and test datasets
 	List<Datum> trainData = FeatureFactory.readTrainData(args[0]);
 	List<Datum> testData = FeatureFactory.readTestData(args[1]);	
+
+  // TODO: Run baseline that outputs predictions - list of Datum
+
+  FileOutputer.writePredictionsToFile("../baselinePredictions.out", testData, testData);
+
+
+
 	
 	//	read the train and test data
 	//TODO: Implement this function (just reads in vocab and word vectors)
