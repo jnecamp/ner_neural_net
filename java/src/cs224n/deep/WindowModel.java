@@ -11,22 +11,29 @@ import java.text.*;
 public class WindowModel {
 
 	protected SimpleMatrix L, W, U;
-	//
-	public int windowSize,wordSize, hiddenSize;
 
-	public WindowModel(int _windowSize, int _hiddenSize, double _lr){
-		//TODO
+	public int windowSize, wordSize, numClasses, hiddenSize, inputSize;
+  
+  public double alpha;
+
+	public WindowModel(int _windowSize, int _wordSize, int _hiddenSize, int _classes, double _lr){
+    windowSize = _windowSize; 
+    wordSize = _wordSize; 
+    hiddenSize = _hiddenSize;
+    numClasses = _classes;
+    alpha = _lr; 
+    inputSize = windowSize * wordSize; 
 	}
 
 	/**
 	 * Initializes the weights randomly. 
 	 */
 	public void initWeights(){
-		//TODO
-		// initialize with bias inside as the last column
-		// W = SimpleMatrix...
-		// U for the score
-		// U = SimpleMatrix...
+    Random random = new Random();
+    double wInit = Math.sqrt(6)/Math.sqrt(inputSize + hiddenSize);
+    double uInit = Math.sqrt(6)/Math.sqrt(hiddenSize + numClasses);
+    SimpleMatrix W = SimpleMatrix.random(hiddenSize, inputSize, -wInit, wInit, random); 
+    SimpleMatrix U = SimpleMatrix.random(numClasses, hiddenSize, -uInit, uInit, random);
 	}
 
 
