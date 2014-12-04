@@ -19,7 +19,9 @@ public class NER {
     // this reads in the train and test datasets
     List<Datum> trainData = FeatureFactory.readTrainData(args[0]);
     List<Datum> testData = FeatureFactory.readTestData(args[1]);	
-
+    for (Datum datum : trainData) {
+      System.out.println(datum.word);
+    }
     
     //	read the train and test data
     //TODO: Implement this function (just reads in vocab and word vectors)
