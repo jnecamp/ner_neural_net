@@ -65,8 +65,8 @@ public class WindowModel {
       y.set(labelToIndex.get(datum.label), 1);  
       SimpleMatrix x = getXForWord(i, word, trainData);   
 
-      SimpleMatrix p = feedForward(x); 
-       
+      //SimpleMatrix p = feedForward(x); 
+      gradientCheck(x, y); 
     }
 	}
 
@@ -98,6 +98,10 @@ public class WindowModel {
     SimpleMatrix uGrad = getUGradient(delta2); 
     SimpleMatrix wGrad = getWGradient(delta1, x); 
     SimpleMatrix lGrad = getLGradient(delta1);
+
+    U = U.minus(uGrad.scale(alpha)); 
+    W = W.minus(wGrad.scale(alpha));
+    // do some manipulation for L update
   } 
 
   public void gradientCheck(SimpleMatrix x, SimpleMatrix y) { 
