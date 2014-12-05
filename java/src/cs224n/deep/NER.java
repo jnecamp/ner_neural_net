@@ -19,7 +19,7 @@ public class NER {
     // this reads in the train and test datasets
     List<Datum> trainData = FeatureFactory.readTrainData(args[0]);
     List<Datum> testData = FeatureFactory.readTestData(args[1]);	
-    
+
     //	read the train and test data
     //TODO: Implement this function (just reads in vocab and word vectors)
     FeatureFactory.initializeVocab("../data/vocab.txt");
@@ -31,7 +31,7 @@ public class NER {
 
     //TODO: Implement those two functions
     model.train(trainData);
-    //model.test(testData);
-    FileOutputer.writePredictionsToFile("../WindowModelPredictions.out", testData, testData);
+    List<Datum> predictions = model.test(testData);
+    FileOutputer.writePredictionsToFile("../WindowModelPredictions.out", testData, predictions);
   }
 }

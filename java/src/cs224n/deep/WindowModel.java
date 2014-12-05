@@ -14,13 +14,18 @@ public class WindowModel {
 
   public final double EPSILON = .0001;
 
+  public final int NUM_SGD_ITERS = 5;
+
 	public int windowSize, wordSize, numClasses, hiddenSize, inputSize;
+  
+  public int xMinusIndex,  xIndex, xPlusIndex;
   
   public double alpha;
 
   public double lambda = .1;
   
   public HashMap<String, Integer> labelToIndex;
+  public HashMap<Integer, String> indexToLabel;
 
 	public WindowModel(int _windowSize, int _wordSize, int _hiddenSize, int _classes, double _lr){
     windowSize = _windowSize; 
@@ -30,11 +35,17 @@ public class WindowModel {
     alpha = _lr; 
     inputSize = windowSize * wordSize; 
     labelToIndex = new HashMap<String, Integer>();
+    indexToLabel = new HashMap<Integer, String>();
     labelToIndex.put("O", 0);
+    indexToLabel.put(0, "O");
     labelToIndex.put("LOC", 1);
+    indexToLabel.put(1, "LOC");
     labelToIndex.put("MISC", 2);
+    indexToLabel.put(2, "MISC");
     labelToIndex.put("ORG", 3);
+    indexToLabel.put(3, "ORG");
     labelToIndex.put("PER", 4);
+    indexToLabel.put(4, "PER");
 	}
 
 	/**
@@ -47,6 +58,8 @@ public class WindowModel {
     W = SimpleMatrix.random(hiddenSize, inputSize + 1, -wInit, wInit, random); 
     U = SimpleMatrix.random(numClasses, hiddenSize + 1, -uInit, uInit, random);
     L = FeatureFactory.allVecs;
+    // double lInit = Math.sqrt(6)/Math.sqrt(allVecs.numCols() + inputSize);
+    // L = SimpleMatrix.random(FeatureFactory.allVecs.numRows(), FeatureFactory.allVecs.numRows(), -lInit, lInit, random); 
 	}
 
 
@@ -54,27 +67,34 @@ public class WindowModel {
 	 * Simplest SGD training 
 	 */
 	public void train(List<Datum> _trainData ){
-		//	TODO shuffle the data for SGD 
-    List<Datum> trainData = _trainData;
-    for (int i = 1; i < trainData.size()-1; i++) {
-      Datum datum = trainData.get(i);
-      String word = datum.word;
-      if (word == "<s>" || word == "</s>") {
-        continue;
-      }
+    System.out.println("TRAINING");
+    for (int iter=0; iter < NUM_SGD_ITERS; iter++) {
+      System.out.println("ITER: " + (iter+1));
+      //	TODO shuffle the data for SGD 
+      List<Datum> trainData = _trainData;
+      for (int i = 1; i < trainData.size()-1; i++) {
+        if (i % 10000 == 0) {
+          System.out.println((iter+1) + "\t" + i + " of " + trainData.size()); 
+        }
+        Datum datum = trainData.get(i);
+        String word = datum.word;
+        if (word == "<s>" || word == "</s>") {
+          continue;
+        }
 
-      SimpleMatrix y = new SimpleMatrix(numClasses, 1);  
-      y.set(labelToIndex.get(datum.label), 1);  
-      SimpleMatrix unbiased = getXForWord(i, word, trainData);   
-      SimpleMatrix x = new SimpleMatrix(unbiased.numRows() + 1, unbiased.numCols());
-      for (int j = 0; j < unbiased.numRows(); j++) {
-        x.set(j, 0, unbiased.get(j, 0));
+        SimpleMatrix y = new SimpleMatrix(numClasses, 1);  
+        y.set(labelToIndex.get(datum.label), 1);  
+        SimpleMatrix unbiased = getXForWord(i, word, trainData);   
+        SimpleMatrix x = new SimpleMatrix(unbiased.numRows() + 1, unbiased.numCols());
+        for (int j = 0; j < unbiased.numRows(); j++) {
+          x.set(j, 0, unbiased.get(j, 0));
+        }
+        x.set(unbiased.numRows(), 0, 1); // bias
+   
+        SimpleMatrix p = feedForward(x); 
+        backprop(x, p, y);
+        //gradientCheckReg(x, y); 
       }
-      x.set(unbiased.numRows(), 0, 1); // bias
- 
-      //SimpleMatrix p = feedForward(x); 
-
-      gradientCheckReg(x, y); 
     }
 	}
 
@@ -122,13 +142,19 @@ public class WindowModel {
     SimpleMatrix delta2 = p.minus(y);
     SimpleMatrix delta1 = getDelta1(delta2);
 
-    SimpleMatrix uGrad = getUGradient(delta2); 
-    SimpleMatrix wGrad = getWGradient(delta1, x); 
+    SimpleMatrix uGrad = getUGradientReg(delta2); 
+    SimpleMatrix wGrad = getWGradientReg(delta1, x); 
     SimpleMatrix lGrad = getLGradient(delta1);
 
     U = U.minus(uGrad.scale(alpha)); 
     W = W.minus(wGrad.scale(alpha));
+
     // do some manipulation for L update
+    for (int i = 0; i < wordSize; i++) { 
+      L.set(xMinusIndex, i, L.get(xMinusIndex, i) - alpha*lGrad.get(i)); 
+      L.set(xIndex, i, L.get(xIndex, i) - alpha*lGrad.get(i+50)); 
+      L.set(xPlusIndex, i, L.get(xPlusIndex, i) - alpha*lGrad.get(i+100)); 
+    }
   } 
 
   public void gradientCheck(SimpleMatrix x, SimpleMatrix y) { 
@@ -279,13 +305,11 @@ public class WindowModel {
                                    Math.pow(U.extractMatrix(0, numClasses, 0, hiddenSize).normF(), 2));
   }
 
-  public SimpleMatrix getXForWord(int index, String word, List<Datum> trainData) {
-      String wordMinus = trainData.get(index-1).word; 
-      String wordPlus = trainData.get(index+1).word;
-      System.out.println(wordMinus + ", " + word + ", " + wordPlus);
-      int xMinusIndex;
-      int xIndex;
-      int xPlusIndex;
+  public SimpleMatrix getXForWord(int index, String word, List<Datum> data) {
+      word = word.toLowerCase(); 
+      String wordMinus = data.get(index-1).word.toLowerCase(); 
+      String wordPlus = data.get(index+1).word.toLowerCase();
+      //System.out.println(wordMinus + ", " + word + ", " + wordPlus);
       if (FeatureFactory.wordToNum.containsKey(wordMinus)) {
         xMinusIndex = FeatureFactory.wordToNum.get(wordMinus); 
       } else {
@@ -301,7 +325,7 @@ public class WindowModel {
       } else {
         xPlusIndex = FeatureFactory.wordToNum.get("UUUNKKK");   
       }
-      System.out.println(xMinusIndex + ", " + xIndex + ", " + xPlusIndex);
+      //System.out.println(xMinusIndex + ", " + xIndex + ", " + xPlusIndex);
       SimpleMatrix unbiasedWindow = new SimpleMatrix(inputSize, 1);
       for (int i = 0; i < wordSize; i++) { 
         unbiasedWindow.set(i, 0, L.get(xMinusIndex, i));
@@ -312,9 +336,41 @@ public class WindowModel {
   }
 
 
-	public void test(List<Datum> testData){
-		// TODO
+	public List<Datum> test(List<Datum> testData){
+    System.out.println("TESTING");
+    List<Datum> predictions = new ArrayList<Datum>(); 
+    predictions.add(testData.get(0)); //first is <s> 
+    for (int i = 1; i < testData.size()-1; i++) {
+      Datum datum = testData.get(i);
+      String word = datum.word;
+
+      SimpleMatrix unbiased = getXForWord(i, word, testData);   
+      SimpleMatrix x = new SimpleMatrix(unbiased.numRows() + 1, unbiased.numCols());
+      for (int j = 0; j < unbiased.numRows(); j++) {
+        x.set(j, 0, unbiased.get(j, 0));
+      }
+      x.set(unbiased.numRows(), 0, 1); // bias
+ 
+      SimpleMatrix p = feedForward(x); 
+      predictions.add(makeDatum(word, p)); 
+    }
+    predictions.add(testData.get(testData.size()-1)); //last is </s>
+    return predictions;
 	}
+ 
+
+  public Datum makeDatum(String word, SimpleMatrix p) { 
+    double maxVal = 0.0;
+    int maxIndex = -1;
+    for (int i = 0; i < p.numRows(); i++) { 
+      double val = p.get(i);  
+      if (val > maxVal) { 
+        maxVal = val;
+        maxIndex = i;
+      }
+    }
+    return new Datum(word, indexToLabel.get(maxIndex));
+  }
 
   public SimpleMatrix feedForward(SimpleMatrix window) {
     z = W.mult(window);
