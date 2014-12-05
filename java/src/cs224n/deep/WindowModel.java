@@ -201,36 +201,24 @@ public class WindowModel {
       if (FeatureFactory.wordToNum.containsKey(wordMinus)) {
         xMinusIndex = FeatureFactory.wordToNum.get(wordMinus); 
       } else {
-        xMinusIndex = -1;   
+        xMinusIndex = FeatureFactory.wordToNum.get("UUUNKKK");   
       }
       if (FeatureFactory.wordToNum.containsKey(word)) {
         xIndex = FeatureFactory.wordToNum.get(word); 
       } else {
-        xIndex = -1;   
+        xIndex = FeatureFactory.wordToNum.get("UUUNKKK");    
       }
       if (FeatureFactory.wordToNum.containsKey(wordPlus)) {
         xPlusIndex = FeatureFactory.wordToNum.get(wordPlus); 
       } else {
-        xPlusIndex = -1;   
+        xPlusIndex = FeatureFactory.wordToNum.get("UUUNKKK");   
       }
       System.out.println(xMinusIndex + ", " + xIndex + ", " + xPlusIndex);
       SimpleMatrix unbiasedWindow = new SimpleMatrix(inputSize, 1);
       for (int i = 0; i < wordSize; i++) { 
-        if (xMinusIndex != -1) {
-          unbiasedWindow.set(i, 0, L.get(xMinusIndex, i));
-        } else {
-          unbiasedWindow.set(i, 0, 0);
-        }
-        if (xIndex != -1) {
-          unbiasedWindow.set(i+50, 0, L.get(xIndex, i));
-        } else {
-          unbiasedWindow.set(i+50, 0, 0);
-        }
-        if (xPlusIndex != -1) {
-          unbiasedWindow.set(i+100, 0, L.get(xPlusIndex, i));
-        } else {
-          unbiasedWindow.set(i+100, 0, 0);
-        }
+        unbiasedWindow.set(i, 0, L.get(xMinusIndex, i));
+        unbiasedWindow.set(i+50, 0, L.get(xIndex, i));
+        unbiasedWindow.set(i+100, 0, L.get(xPlusIndex, i));
       }
       return unbiasedWindow;
   }
