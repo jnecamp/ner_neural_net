@@ -66,7 +66,7 @@ public class WindowModel {
       SimpleMatrix unbiased = getXForWord(i, word, trainData);   
       SimpleMatrix window = new SimpleMatrix(unbiased.numRows() + 1, unbiased.numCols());
       for (int j = 0; j < unbiased.numRows(); j++) {
-        window.set(j, 0, window.get(j, 0));
+        window.set(j, 0, unbiased.get(j, 0));
       }
       window.set(unbiased.numRows(), 0, 1); // bias
  
@@ -80,17 +80,19 @@ public class WindowModel {
   }
 
   public SimpleMatrix getDelta1(SimpleMatrix delta2) { 
-    SimpleMatrix Fz = new SimpleMatrix(z.numRows() + 1, z.numRows() + 1); 
-    for (int i=0; i < z.numRows() + 1; i++) {
+    SimpleMatrix Fz = new SimpleMatrix(z.numRows(), z.numRows()); 
+    for (int i=0; i < z.numRows(); i++) {
       double val;
-      if (i < z.numRows()) {
-        val = 1 - Math.pow(Math.tanh(z.get(i, 0)), 2); 
-      } else {
-        val = 1 - Math.pow(Math.tanh(1), 2);
-      }
+      val = 1 - Math.pow(Math.tanh(z.get(i, 0)), 2); 
       Fz.set(i, i, val);
     }
-    return Fz.mult(U.transpose()).mult(delta2);
+    SimpleMatrix unbiasedU = new SimpleMatrix(numClasses, hiddenSize);
+    for (int i=0; i < numClasses; i++) { 
+      for (int j=0; j < hiddenSize; j++) { 
+        unbiasedU.set(i, j, U.get(i, j));
+      }
+    }
+    return Fz.mult(unbiasedU.transpose()).mult(delta2);
   }
 
   public SimpleMatrix getWGradient(SimpleMatrix delta1, SimpleMatrix x) {     
@@ -98,9 +100,9 @@ public class WindowModel {
   }
 
   public SimpleMatrix getLGradient(SimpleMatrix delta1) { 
-    System.out.println(W.numCols() + "x" + W.numRows());
+    System.out.println(W.numRows() + "x" + W.numCols());
     System.out.println(delta1.numRows() + "x" + delta1.numCols());
-    return W.transpose().mult(delta1.transpose());
+    return W.transpose().mult(delta1);
   }
 
   public void backprop(SimpleMatrix x, SimpleMatrix p, SimpleMatrix y){
@@ -122,8 +124,8 @@ public class WindowModel {
     SimpleMatrix oldL = L;
     int uSize = U.getNumElements();
     int wSize = W.getNumElements();
-    int lSize = L.getNumElements();
-    int thetaSize = uSize + wSize + lSize;
+    int xSize = x.getNumElements();
+    int thetaSize = uSize + wSize + xSize;
     SimpleMatrix pMinus;
     SimpleMatrix pPlus;
     double F;
@@ -154,8 +156,8 @@ public class WindowModel {
         F = getWGradient(delta1, x).get(m, n);
       } else {
         int j = i - (uSize + wSize);
-        int n = j % L.numCols();
-        int m = (j / L.numCols());  
+        int n = j % x.numCols();
+        int m = (j / x.numCols());  
         L.set(m, n, oldL.get(m, n) - EPSILON); 
         pMinus = feedForward(x);
         L.set(m, n, oldL.get(m, n) + EPSILON);
@@ -169,9 +171,9 @@ public class WindowModel {
       double JMinus = calcJ(y, pMinus); 
       double JPlus = calcJ(y, pPlus);
       double Jdiff = (JPlus - JMinus)/(2*EPSILON);
-      System.out.println(F);
-      System.out.println(Jdiff);
-      System.out.println(Math.abs(F-Jdiff));
+      System.out.println("F: " + F);
+      System.out.println("J DIFF: " + Jdiff);
+      System.out.println("F&J DIFF: " + Math.abs(F-Jdiff));
       if (Math.abs(F - Jdiff) <= .0000001) {
         System.out.println("GRADIENT CHECK PASSED");
       } else {
@@ -213,7 +215,7 @@ public class WindowModel {
       }
       System.out.println(xMinusIndex + ", " + xIndex + ", " + xPlusIndex);
       SimpleMatrix unbiasedWindow = new SimpleMatrix(inputSize, 1);
-      for (int i = 0; i < windowSize; i++) { 
+      for (int i = 0; i < wordSize; i++) { 
         if (xMinusIndex != -1) {
           unbiasedWindow.set(i, 0, L.get(xMinusIndex, i));
         } else {
@@ -244,7 +246,7 @@ public class WindowModel {
     for (int i = 0; i < z.numRows(); i++) {
       h.set(i, 0, Math.tanh(z.get(i, 0)));
     }
-    h.set(z.numRows(), 0, 1); // bias 
+    h.set(z.numRows(), 0, 1); // bias
     SimpleMatrix v = U.mult(h);
     return softmax(v); 
   }
