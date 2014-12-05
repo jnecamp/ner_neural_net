@@ -42,9 +42,9 @@ public class WindowModel {
     Random random = new Random();
     double wInit = Math.sqrt(6)/Math.sqrt(inputSize + hiddenSize);
     double uInit = Math.sqrt(6)/Math.sqrt(hiddenSize + numClasses);
-    SimpleMatrix W = SimpleMatrix.random(hiddenSize, inputSize, -wInit, wInit, random); 
-    SimpleMatrix U = SimpleMatrix.random(numClasses, hiddenSize, -uInit, uInit, random);
-    SimpleMatrix L = FeatureFactory.allVecs;
+    W = SimpleMatrix.random(hiddenSize, inputSize + 1, -wInit, wInit, random); 
+    U = SimpleMatrix.random(numClasses, hiddenSize + 1, -uInit, uInit, random);
+    L = FeatureFactory.allVecs;
 	}
 
 
@@ -63,10 +63,15 @@ public class WindowModel {
 
       SimpleMatrix y = new SimpleMatrix(numClasses, 1);  
       y.set(labelToIndex.get(datum.label), 1);  
-      SimpleMatrix x = getXForWord(i, word, trainData);   
-
+      SimpleMatrix unbiased = getXForWord(i, word, trainData);   
+      SimpleMatrix window = new SimpleMatrix(unbiased.numRows() + 1, unbiased.numCols());
+      for (int j = 0; j < unbiased.numRows(); j++) {
+        window.set(j, 0, window.get(j, 0));
+      }
+      window.set(unbiased.numRows(), 0, 1); // bias
+ 
       //SimpleMatrix p = feedForward(x); 
-      gradientCheck(x, y); 
+      gradientCheck(window, y); 
     }
 	}
 
@@ -75,9 +80,14 @@ public class WindowModel {
   }
 
   public SimpleMatrix getDelta1(SimpleMatrix delta2) { 
-    SimpleMatrix Fz = new SimpleMatrix(z.numRows(), z.numRows()); 
-    for (int i=0; i < z.numRows(); i++) {
-      double val = 1 - Math.pow(Math.tanh(z.get(i, 1)), 2); 
+    SimpleMatrix Fz = new SimpleMatrix(z.numRows() + 1, z.numRows() + 1); 
+    for (int i=0; i < z.numRows() + 1; i++) {
+      double val;
+      if (i < z.numRows()) {
+        val = 1 - Math.pow(Math.tanh(z.get(i, 0)), 2); 
+      } else {
+        val = 1 - Math.pow(Math.tanh(1), 2);
+      }
       Fz.set(i, i, val);
     }
     return Fz.mult(U.transpose()).mult(delta2);
@@ -88,7 +98,9 @@ public class WindowModel {
   }
 
   public SimpleMatrix getLGradient(SimpleMatrix delta1) { 
-    return W.transpose().mult(delta1);
+    System.out.println(W.numCols() + "x" + W.numRows());
+    System.out.println(delta1.numRows() + "x" + delta1.numCols());
+    return W.transpose().mult(delta1.transpose());
   }
 
   public void backprop(SimpleMatrix x, SimpleMatrix p, SimpleMatrix y){
@@ -127,7 +139,7 @@ public class WindowModel {
         SimpleMatrix p = feedForward(x);
         SimpleMatrix delta2 = p.minus(y);
         F = getUGradient(delta2).get(m, n);
-      } else if (i < uSize + wSize && i > uSize) { 
+      } else if (i < uSize + wSize && i >= uSize) { 
         int j = i - uSize;
         int n = j % W.numCols();
         int m = (j / W.numCols());  
@@ -157,7 +169,10 @@ public class WindowModel {
       double JMinus = calcJ(y, pMinus); 
       double JPlus = calcJ(y, pPlus);
       double Jdiff = (JPlus - JMinus)/(2*EPSILON);
-      if (Math.abs(F - Jdiff) <= .0000007) {
+      System.out.println(F);
+      System.out.println(Jdiff);
+      System.out.println(Math.abs(F-Jdiff));
+      if (Math.abs(F - Jdiff) <= .0000001) {
         System.out.println("GRADIENT CHECK PASSED");
       } else {
         System.out.println("GRADIENT CHECK FAILED");
@@ -167,8 +182,8 @@ public class WindowModel {
   
   public double calcJ(SimpleMatrix y, SimpleMatrix p) { 
     for (int i=0; i < y.numRows(); i++) {
-      if (y.get(i, 1) == 1.0) { 
-        return Math.log(p.get(i, 1));
+      if (y.get(i, 0) == 1.0) { 
+        return Math.log(p.get(i, 0));
       }
     }
     return Double.POSITIVE_INFINITY;
@@ -177,16 +192,43 @@ public class WindowModel {
   public SimpleMatrix getXForWord(int index, String word, List<Datum> trainData) {
       String wordMinus = trainData.get(index-1).word; 
       String wordPlus = trainData.get(index+1).word;
-
-      int xMinusIndex = FeatureFactory.wordToNum.get(wordMinus); 
-      int xIndex = FeatureFactory.wordToNum.get(word); 
-      int xPlusIndex = FeatureFactory.wordToNum.get(wordPlus);
-
+      System.out.println(wordMinus + ", " + word + ", " + wordPlus);
+      int xMinusIndex;
+      int xIndex;
+      int xPlusIndex;
+      if (FeatureFactory.wordToNum.containsKey(wordMinus)) {
+        xMinusIndex = FeatureFactory.wordToNum.get(wordMinus); 
+      } else {
+        xMinusIndex = -1;   
+      }
+      if (FeatureFactory.wordToNum.containsKey(word)) {
+        xIndex = FeatureFactory.wordToNum.get(word); 
+      } else {
+        xIndex = -1;   
+      }
+      if (FeatureFactory.wordToNum.containsKey(wordPlus)) {
+        xPlusIndex = FeatureFactory.wordToNum.get(wordPlus); 
+      } else {
+        xPlusIndex = -1;   
+      }
+      System.out.println(xMinusIndex + ", " + xIndex + ", " + xPlusIndex);
       SimpleMatrix unbiasedWindow = new SimpleMatrix(inputSize, 1);
       for (int i = 0; i < windowSize; i++) { 
-        unbiasedWindow.set(i, 1, L.get(xMinusIndex, i));
-        unbiasedWindow.set(i+50, 1, L.get(xIndex, i));
-        unbiasedWindow.set(i+100, 1, L.get(xIndex, i));
+        if (xMinusIndex != -1) {
+          unbiasedWindow.set(i, 0, L.get(xMinusIndex, i));
+        } else {
+          unbiasedWindow.set(i, 0, 0);
+        }
+        if (xIndex != -1) {
+          unbiasedWindow.set(i+50, 0, L.get(xIndex, i));
+        } else {
+          unbiasedWindow.set(i+50, 0, 0);
+        }
+        if (xPlusIndex != -1) {
+          unbiasedWindow.set(i+100, 0, L.get(xPlusIndex, i));
+        } else {
+          unbiasedWindow.set(i+100, 0, 0);
+        }
       }
       return unbiasedWindow;
   }
@@ -196,18 +238,13 @@ public class WindowModel {
 		// TODO
 	}
 
-  public SimpleMatrix feedForward(SimpleMatrix unbiasedWindow) {
-    SimpleMatrix window = new SimpleMatrix(unbiasedWindow.numRows() + 1, unbiasedWindow.numCols());
-    for (int i = 0; i < unbiasedWindow.numRows(); i++) {
-      window.set(i, 1, window.get(i, 1));
-    }
-    window.set(unbiasedWindow.numRows(), 1, 1); // bias
+  public SimpleMatrix feedForward(SimpleMatrix window) {
     z = W.mult(window);
     h = new SimpleMatrix(z.numRows() + 1, z.numCols());
     for (int i = 0; i < z.numRows(); i++) {
-      h.set(i, 1, Math.tanh(z.get(i, 1)));
+      h.set(i, 0, Math.tanh(z.get(i, 0)));
     }
-    h.set(z.numRows(), 1); // bias 
+    h.set(z.numRows(), 0, 1); // bias 
     SimpleMatrix v = U.mult(h);
     return softmax(v); 
   }
@@ -216,7 +253,7 @@ public class WindowModel {
     double denom = 0.0;    
     double[] numer = new double[v.numRows()];
     for (int i = 0; i < v.numRows(); i++) {
-      double expI = Math.exp(v.get(i, 1));
+      double expI = Math.exp(v.get(i, 0));
       denom += expI; 
       numer[i] = expI;
     }
