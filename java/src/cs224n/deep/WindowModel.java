@@ -100,8 +100,6 @@ public class WindowModel {
   }
 
   public SimpleMatrix getLGradient(SimpleMatrix delta1) { 
-    System.out.println(W.numRows() + "x" + W.numCols());
-    System.out.println(delta1.numRows() + "x" + delta1.numCols());
     return W.transpose().mult(delta1);
   }
 
@@ -119,9 +117,9 @@ public class WindowModel {
   } 
 
   public void gradientCheck(SimpleMatrix x, SimpleMatrix y) { 
-    SimpleMatrix oldU = U;
-    SimpleMatrix oldW = W;
-    SimpleMatrix oldL = L;
+    SimpleMatrix oldU = U.copy();
+    SimpleMatrix oldW = W.copy();
+    SimpleMatrix oldX = x.copy();
     int uSize = U.getNumElements();
     int wSize = W.getNumElements();
     int xSize = x.getNumElements();
@@ -158,11 +156,11 @@ public class WindowModel {
         int j = i - (uSize + wSize);
         int n = j % x.numCols();
         int m = (j / x.numCols());  
-        L.set(m, n, oldL.get(m, n) - EPSILON); 
+        x.set(m, n, oldX.get(m, n) - EPSILON); 
         pMinus = feedForward(x);
-        L.set(m, n, oldL.get(m, n) + EPSILON);
+        x.set(m, n, oldX.get(m, n) + EPSILON);
         pPlus = feedForward(x); 
-        L = oldL;
+        x  = oldX;
         SimpleMatrix p = feedForward(x);
         SimpleMatrix delta2 = p.minus(y);
         SimpleMatrix delta1 = getDelta1(delta2);
@@ -171,13 +169,15 @@ public class WindowModel {
       double JMinus = calcJ(y, pMinus); 
       double JPlus = calcJ(y, pPlus);
       double Jdiff = (JPlus - JMinus)/(2*EPSILON);
-      System.out.println("F: " + F);
-      System.out.println("J DIFF: " + Jdiff);
-      System.out.println("F&J DIFF: " + Math.abs(F-Jdiff));
+      F = F/2;
       if (Math.abs(F - Jdiff) <= .0000001) {
-        System.out.println("GRADIENT CHECK PASSED");
+        //System.out.println("GRADIENT CHECK PASSED");
       } else {
         System.out.println("GRADIENT CHECK FAILED");
+        System.out.println(i);
+        System.out.println("F: " + F);
+        System.out.println("J DIFF: " + Jdiff);
+        System.out.println("F&J DIFF: " + Math.abs(F-Jdiff));
       }
     }     
   }
@@ -185,9 +185,10 @@ public class WindowModel {
   public double calcJ(SimpleMatrix y, SimpleMatrix p) { 
     for (int i=0; i < y.numRows(); i++) {
       if (y.get(i, 0) == 1.0) { 
-        return Math.log(p.get(i, 0));
+        return -Math.log(p.get(i, 0));
       }
     }
+    System.out.println("------------THIS IS BAD ----------------");
     return Double.POSITIVE_INFINITY;
   }
 
