@@ -117,9 +117,6 @@ public class WindowModel {
   } 
 
   public void gradientCheck(SimpleMatrix x, SimpleMatrix y) { 
-    SimpleMatrix oldU = U.copy();
-    SimpleMatrix oldW = W.copy();
-    SimpleMatrix oldX = x.copy();
     int uSize = U.getNumElements();
     int wSize = W.getNumElements();
     int xSize = x.getNumElements();
@@ -131,11 +128,11 @@ public class WindowModel {
       if (i < uSize) {
         int m = (i / U.numCols());  
         int n = i % U.numCols();
-        U.set(m, n, oldU.get(m, n) - EPSILON); 
+        U.set(m, n, U.get(m, n) - EPSILON); 
         pMinus = feedForward(x);
-        U.set(m, n, oldU.get(m, n) + EPSILON);
+        U.set(m, n, U.get(m, n) + 2*EPSILON);
         pPlus = feedForward(x); 
-        U = oldU;
+        U.set(m, n, U.get(m, n) - EPSILON); 
         SimpleMatrix p = feedForward(x);
         SimpleMatrix delta2 = p.minus(y);
         F = getUGradient(delta2).get(m, n);
@@ -143,11 +140,11 @@ public class WindowModel {
         int j = i - uSize;
         int n = j % W.numCols();
         int m = (j / W.numCols());  
-        W.set(m, n, oldW.get(m, n) - EPSILON); 
+        W.set(m, n, W.get(m, n) - EPSILON); 
         pMinus = feedForward(x);
-        W.set(m, n, oldW.get(m, n) + EPSILON);
+        W.set(m, n, W.get(m, n) + 2*EPSILON);
         pPlus = feedForward(x); 
-        W = oldW;
+        W.set(m, n, W.get(m, n) - EPSILON);
         SimpleMatrix p = feedForward(x);
         SimpleMatrix delta2 = p.minus(y);
         SimpleMatrix delta1 = getDelta1(delta2);
@@ -156,11 +153,11 @@ public class WindowModel {
         int j = i - (uSize + wSize);
         int n = j % x.numCols();
         int m = (j / x.numCols());  
-        x.set(m, n, oldX.get(m, n) - EPSILON); 
+        x.set(m, n, x.get(m, n) - EPSILON); 
         pMinus = feedForward(x);
-        x.set(m, n, oldX.get(m, n) + EPSILON);
+        x.set(m, n, x.get(m, n) + 2*EPSILON);
         pPlus = feedForward(x); 
-        x  = oldX;
+        x.set(m, n, x.get(m, n) - EPSILON);
         SimpleMatrix p = feedForward(x);
         SimpleMatrix delta2 = p.minus(y);
         SimpleMatrix delta1 = getDelta1(delta2);
@@ -169,7 +166,7 @@ public class WindowModel {
       double JMinus = calcJ(y, pMinus); 
       double JPlus = calcJ(y, pPlus);
       double Jdiff = (JPlus - JMinus)/(2*EPSILON);
-      F = F/2;
+      F = F;
       if (Math.abs(F - Jdiff) <= .0000001) {
         //System.out.println("GRADIENT CHECK PASSED");
       } else {
