@@ -151,9 +151,9 @@ public class WindowModel {
 
     // do some manipulation for L update
     for (int i = 0; i < wordSize; i++) { 
-      L.set(xMinusIndex, i, L.get(xMinusIndex, i) - alpha*lGrad.get(i)); 
-      L.set(xIndex, i, L.get(xIndex, i) - alpha*lGrad.get(i+50)); 
-      L.set(xPlusIndex, i, L.get(xPlusIndex, i) - alpha*lGrad.get(i+100)); 
+      L.set(xMinusIndex, i, L.get(i, xMinusIndex) - alpha*lGrad.get(i)); 
+      L.set(xIndex, i, L.get(i, xIndex) - alpha*lGrad.get(i+50)); 
+      L.set(xPlusIndex, i, L.get(i, xPlusIndex) - alpha*lGrad.get(i+100)); 
     }
   } 
 
@@ -328,9 +328,9 @@ public class WindowModel {
       //System.out.println(xMinusIndex + ", " + xIndex + ", " + xPlusIndex);
       SimpleMatrix unbiasedWindow = new SimpleMatrix(inputSize, 1);
       for (int i = 0; i < wordSize; i++) { 
-        unbiasedWindow.set(i, 0, L.get(xMinusIndex, i));
-        unbiasedWindow.set(i+50, 0, L.get(xIndex, i));
-        unbiasedWindow.set(i+100, 0, L.get(xPlusIndex, i));
+        unbiasedWindow.set(i, 0, L.get(i, xMinusIndex));
+        unbiasedWindow.set(i+50, 0, L.get(i, xIndex));
+        unbiasedWindow.set(i+100, 0, L.get(i, xPlusIndex));
       }
       return unbiasedWindow;
   }
