@@ -19,26 +19,20 @@ public class NERValidate {
         return;
     }	    
     LAMBDAS = new ArrayList<Double>();
-    LAMBDAS.add(.001); 
-    LAMBDAS.add(.0001); 
     LAMBDAS.add(.00001); 
     LAMBDAS.add(.000001); 
+    LAMBDAS.add(.0000001); 
 
     ALPHAS = new ArrayList<Double>();
     ALPHAS.add(.01); 
     ALPHAS.add(.001); 
     ALPHAS.add(.0001); 
-    ALPHAS.add(.00001); 
 
     ITERS = new ArrayList<Integer>();
-    ITERS.add(2); 
-    ITERS.add(4); 
-    ITERS.add(8); 
-    ITERS.add(16); 
+    ITERS.add(10); 
     
     H = new ArrayList<Integer>();
     H.add(50);
-    H.add(75); 
     H.add(100); 
     H.add(150); 
 
@@ -62,9 +56,12 @@ public class NERValidate {
 
             //TODO: Implement those two functions
             model.train(trainData);
+            List<Datum> trainPredictions = model.test(trainData);
             List<Datum> predictions = model.test(testData);
-            String filename = "window_" + lambda + "_" + alpha + "_" + numIters + "_" + hiddenSize + ".out";
-            FileOutputer.writePredictionsToFile("../" + filename, testData, predictions);
+            String trainFilename = "train_window_" + lambda + "_" + alpha + "_" + numIters + "_" + hiddenSize + ".out"; 
+            String testFilename = "dev_window_" + lambda + "_" + alpha + "_" + numIters + "_" + hiddenSize + ".out";
+            FileOutputer.writePredictionsToFile("../" + trainFilename, trainData, trainPredictions);
+            FileOutputer.writePredictionsToFile("../" + testFilename, testData, predictions);
           }
         }
       }
