@@ -47,6 +47,7 @@ public class NERValidate {
       for (double alpha : ALPHAS) { 
         for (int numIters : ITERS) { 
           for (int hiddenSize : H) { 
+            System.out.println("LAMBDA: " + lambda + "\nALPHA: " + alpha + "\nITERS: " + numIters + "\nH :" + hiddenSize);
             SimpleMatrix allVecs= FeatureFactory.readWordVectors("../data/wordVectors.txt");
 
             // initialize model 
