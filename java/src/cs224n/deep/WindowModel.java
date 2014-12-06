@@ -72,11 +72,14 @@ public class WindowModel {
       System.out.println("ITER: " + (iter+1));
       //	TODO shuffle the data for SGD 
       List<Datum> trainData = _trainData;
-      for (int i = 1; i < trainData.size()-1; i++) {
+      List<Integer> randPerm = getRandPerm(trainData.size());
+      double cost = 0.0;
+      for (int i = 0; i < randPerm.size(); i++) {
         if (i % 10000 == 0) {
           System.out.println((iter+1) + "\t" + i + " of " + trainData.size()); 
         }
-        Datum datum = trainData.get(i);
+        int index = randPerm.get(i);
+        Datum datum = trainData.get(index);
         String word = datum.word;
         if (word == "<s>" || word == "</s>") {
           continue;
@@ -84,7 +87,7 @@ public class WindowModel {
 
         SimpleMatrix y = new SimpleMatrix(numClasses, 1);  
         y.set(labelToIndex.get(datum.label), 1);  
-        SimpleMatrix unbiased = getXForWord(i, word, trainData);   
+        SimpleMatrix unbiased = getXForWord(index, word, trainData);   
         SimpleMatrix x = new SimpleMatrix(unbiased.numRows() + 1, unbiased.numCols());
         for (int j = 0; j < unbiased.numRows(); j++) {
           x.set(j, 0, unbiased.get(j, 0));
@@ -93,11 +96,21 @@ public class WindowModel {
    
         SimpleMatrix p = feedForward(x); 
         backprop(x, p, y);
+        cost += calcJReg(y, p);
         //gradientCheckReg(x, y); 
       }
+      System.out.println("COST :" + cost); 
     }
 	}
 
+  public List<Integer> getRandPerm(int size) { 
+    List<Integer> perm = new ArrayList<Integer>();
+    for (int i=1; i < size-1; i++) { 
+      perm.add(i);
+    }
+    java.util.Collections.shuffle(perm);
+    return perm;
+  }
 
   public SimpleMatrix getDelta1(SimpleMatrix delta2) { 
     SimpleMatrix Fz = new SimpleMatrix(z.numRows(), z.numRows()); 
@@ -305,26 +318,29 @@ public class WindowModel {
                                    Math.pow(U.extractMatrix(0, numClasses, 0, hiddenSize).normF(), 2));
   }
 
+  public int getLIndexForWord(String word) { 
+    int index = -1;
+    if (FeatureFactory.wordToNum.containsKey(word)) {
+      index = FeatureFactory.wordToNum.get(word); 
+    } else {
+      try {
+        Double.parseDouble(word); 
+        index = FeatureFactory.wordToNum.get("NNNUMMM");   
+      } catch (Exception e) {
+        index = FeatureFactory.wordToNum.get("UUUNKKK");   
+      }
+    }
+    return index;
+  }
+
   public SimpleMatrix getXForWord(int index, String word, List<Datum> data) {
       word = word.toLowerCase(); 
       String wordMinus = data.get(index-1).word.toLowerCase(); 
       String wordPlus = data.get(index+1).word.toLowerCase();
       //System.out.println(wordMinus + ", " + word + ", " + wordPlus);
-      if (FeatureFactory.wordToNum.containsKey(wordMinus)) {
-        xMinusIndex = FeatureFactory.wordToNum.get(wordMinus); 
-      } else {
-        xMinusIndex = FeatureFactory.wordToNum.get("UUUNKKK");   
-      }
-      if (FeatureFactory.wordToNum.containsKey(word)) {
-        xIndex = FeatureFactory.wordToNum.get(word); 
-      } else {
-        xIndex = FeatureFactory.wordToNum.get("UUUNKKK");    
-      }
-      if (FeatureFactory.wordToNum.containsKey(wordPlus)) {
-        xPlusIndex = FeatureFactory.wordToNum.get(wordPlus); 
-      } else {
-        xPlusIndex = FeatureFactory.wordToNum.get("UUUNKKK");   
-      }
+      xMinusIndex = getLIndexForWord(wordMinus);  
+      xIndex = getLIndexForWord(word);  
+      xPlusIndex = getLIndexForWord(wordPlus);
       //System.out.println(xMinusIndex + ", " + xIndex + ", " + xPlusIndex);
       SimpleMatrix unbiasedWindow = new SimpleMatrix(inputSize, 1);
       for (int i = 0; i < wordSize; i++) { 

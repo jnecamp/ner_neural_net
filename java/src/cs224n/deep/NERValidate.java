@@ -25,12 +25,10 @@ public class NERValidate {
     LAMBDAS.add(.000001); 
 
     ALPHAS = new ArrayList<Double>();
-    ALPHAS.add(.1); 
     ALPHAS.add(.01); 
     ALPHAS.add(.001); 
     ALPHAS.add(.0001); 
     ALPHAS.add(.00001); 
-    ALPHAS.add(.000001); 
 
     ITERS = new ArrayList<Integer>();
     ITERS.add(2); 
@@ -39,10 +37,10 @@ public class NERValidate {
     ITERS.add(16); 
     
     H = new ArrayList<Integer>();
+    H.add(50);
     H.add(75); 
     H.add(100); 
     H.add(150); 
-    H.add(200);
 
     // this reads in the train and test datasets
     List<Datum> trainData = FeatureFactory.readTrainData(args[0]);
