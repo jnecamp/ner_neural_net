@@ -39,10 +39,10 @@ public class NERValidate {
     ITERS.add(16); 
     
     H = new ArrayList<Integer>();
-    H.add(50);
     H.add(75); 
     H.add(100); 
     H.add(150); 
+    H.add(200);
 
     // this reads in the train and test datasets
     List<Datum> trainData = FeatureFactory.readTrainData(args[0]);
