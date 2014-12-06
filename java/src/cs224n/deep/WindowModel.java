@@ -14,25 +14,25 @@ public class WindowModel {
 
   public final double EPSILON = .0001;
 
-  public final int NUM_SGD_ITERS = 5;
+  public int numberSGDIters;
 
 	public int windowSize, wordSize, numClasses, hiddenSize, inputSize;
   
   public int xMinusIndex,  xIndex, xPlusIndex;
   
-  public double alpha;
+  public double alpha, lambda;
 
-  public double lambda = .1;
-  
   public HashMap<String, Integer> labelToIndex;
   public HashMap<Integer, String> indexToLabel;
 
-	public WindowModel(int _windowSize, int _wordSize, int _hiddenSize, int _classes, double _lr){
+	public WindowModel(int _windowSize, int _wordSize, int _hiddenSize, int _classes, double _lr, double _lambda, int _numberSGDIters){
     windowSize = _windowSize; 
     wordSize = _wordSize; 
     hiddenSize = _hiddenSize;
     numClasses = _classes;
     alpha = _lr; 
+    lambda = _lambda;
+    numberSGDIters = _numberSGDIters;
     inputSize = windowSize * wordSize; 
     labelToIndex = new HashMap<String, Integer>();
     indexToLabel = new HashMap<Integer, String>();
@@ -68,7 +68,7 @@ public class WindowModel {
 	 */
 	public void train(List<Datum> _trainData ){
     System.out.println("TRAINING");
-    for (int iter=0; iter < NUM_SGD_ITERS; iter++) {
+    for (int iter=0; iter < numberSGDIters; iter++) {
       System.out.println("ITER: " + (iter+1));
       //	TODO shuffle the data for SGD 
       List<Datum> trainData = _trainData;

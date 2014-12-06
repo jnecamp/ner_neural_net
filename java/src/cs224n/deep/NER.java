@@ -9,7 +9,13 @@ import org.ejml.simple.SimpleMatrix;
 
 
 public class NER {
-    
+  
+  public static final int H = 100;
+  public static final int NUM_ITERS = 5;
+  public static final double ALPHA = .0001; 
+  public static final double LAMBDA = .0001;
+
+
   public static void main(String[] args) throws IOException, Exception {
     if (args.length < 2) {
         System.out.println("USAGE: java -cp classes NER ../data/train ../data/dev");
@@ -26,7 +32,7 @@ public class NER {
     SimpleMatrix allVecs= FeatureFactory.readWordVectors("../data/wordVectors.txt");
 
     // initialize model 
-    WindowModel model = new WindowModel(3, 50, 100, 5, 0.001);
+    WindowModel model = new WindowModel(3, 50, H, 5, ALPHA, LAMBDA, NUM_ITERS);
     model.initWeights();
 
     //TODO: Implement those two functions
