@@ -10,10 +10,10 @@ import org.ejml.simple.SimpleMatrix;
 
 public class NER {
   
-  public static final int H = 100;
+  public static final int H = 150;
   public static final int NUM_ITERS = 10;
   public static final double ALPHA = .01; 
-  public static final double LAMBDA = 0; //.00001;
+  public static final double LAMBDA = .00001;
 
 
   public static void main(String[] args) throws IOException, Exception {

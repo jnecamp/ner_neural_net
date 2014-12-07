@@ -58,8 +58,8 @@ public class WindowModel {
     W = SimpleMatrix.random(hiddenSize, inputSize + 1, -wInit, wInit, random); 
     U = SimpleMatrix.random(numClasses, hiddenSize + 1, -uInit, uInit, random);
     L = FeatureFactory.allVecs;
-    // double lInit = Math.sqrt(6)/Math.sqrt(allVecs.numCols() + inputSize);
-    // L = SimpleMatrix.random(FeatureFactory.allVecs.numRows(), FeatureFactory.allVecs.numRows(), -lInit, lInit, random); 
+    // double lInit = Math.sqrt(6)/Math.sqrt(100232 + inputSize);
+    // L = SimpleMatrix.random(100232, 50, -lInit, lInit, random); 
 	}
 
 
