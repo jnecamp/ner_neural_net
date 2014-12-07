@@ -54,7 +54,7 @@ public class FeatureFactory {
 	}
  
  
-	// Look up table matrix with all word vectors as defined in lecture with dimensionality n x |V|
+	// Look up table matrix with all word vectors as defined in lecture with dimensionality  |V| x n
 	static SimpleMatrix allVecs; //access it directly in WindowModel
 	public static SimpleMatrix readWordVectors(String vecFilename) throws IOException {
     allVecs = new SimpleMatrix(100232, 50);
